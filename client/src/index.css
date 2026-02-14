@@ -1,5 +1,162 @@
-/* Placeholder — will be filled in Step 3 */
-body {
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+  --wood-dark: #2c1810;
+  --wood-medium: #3d2517;
+  --wood-light: #5c3d2e;
+  --gold: #d4af37;
+  --gold-light: #e8c252;
+  --gold-dark: #b8942d;
+  --cream: #f5f5dc;
+  --cream-dark: #e8e4c9;
+  --felt-green: #2e7d32;
+  --felt-green-light: #4caf50;
+  --error-red: #c62828;
+
+  --font-display: 'Cinzel', serif;
+  --font-body: 'Crimson Pro', Georgia, serif;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  --border-gold: 2px solid var(--gold);
+  --border-radius: 4px;
+
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-gold: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+* {
   margin: 0;
-  font-family: sans-serif;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--cream);
+  background-color: var(--wood-dark);
+  -webkit-tap-highlight-color: transparent;
+  background-image:
+    radial-gradient(ellipse at top, rgba(92, 61, 46, 0.4) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-blend-mode: overlay;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--gold);
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--gold-light);
+}
+
+button {
+  font-family: var(--font-display);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input, textarea, select {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  background: var(--wood-medium);
+  border: 1px solid var(--wood-light);
+  color: var(--cream);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+input::placeholder, textarea::placeholder {
+  color: rgba(245, 245, 220, 0.4);
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4af37' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--wood-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--wood-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-dark);
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--wood-dark);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
