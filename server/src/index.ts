@@ -40,7 +40,7 @@ app.get('/api/updates-since', (req, res) => {
 app.use((err: Error, _req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      res.status(400).json({ error: 'Bestand is te groot (max 5 MB)' })
+      res.status(400).json({ error: 'Bestand is te groot (max 10 MB)' })
       return
     }
     res.status(400).json({ error: 'Fout bij uploaden van bestand' })
