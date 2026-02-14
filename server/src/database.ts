@@ -16,6 +16,7 @@ db.exec(`
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     author TEXT NOT NULL,
+    screenshot TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
@@ -55,6 +56,12 @@ if (createSql && !createSql.sql.includes('gearchiveerd')) {
     COMMIT;
     PRAGMA foreign_keys = ON;
   `)
+}
+
+// Migration: add screenshot column to existing databases
+const columns = db.pragma('table_info(posts)') as { name: string }[]
+if (!columns.some(col => col.name === 'screenshot')) {
+  db.exec('ALTER TABLE posts ADD COLUMN screenshot TEXT')
 }
 
 export default db

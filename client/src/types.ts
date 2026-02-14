@@ -8,6 +8,7 @@ export interface Post {
   title: string
   description: string
   author: string
+  screenshot: string | null
   created_at: string
   updated_at: string
   comment_count: number

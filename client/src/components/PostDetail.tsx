@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { PostDetail as PostDetailType, PostStatus } from '../types'
 import { useApi } from '../hooks/useApi'
 import { StatusBadge } from './StatusBadge'
@@ -41,8 +41,15 @@ export function PostDetail({ postId, onBack }: Props) {
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editScreenshot, setEditScreenshot] = useState<File | null>(null)
+  const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null)
+  const [editRemoveScreenshot, setEditRemoveScreenshot] = useState(false)
   const [editError, setEditError] = useState('')
   const [saving, setSaving] = useState(false)
+  const editFileRef = useRef<HTMLInputElement>(null)
+
+  // Lightbox state
+  const [lightbox, setLightbox] = useState(false)
 
   // Modal state
   const [modal, setModal] = useState<{
@@ -92,13 +99,33 @@ export function PostDetail({ postId, onBack }: Props) {
     if (!post) return
     setEditTitle(post.title)
     setEditDescription(post.description)
+    setEditScreenshot(null)
+    setEditPreviewUrl(null)
+    setEditRemoveScreenshot(false)
     setEditError('')
     setEditing(true)
   }
 
   const cancelEditing = () => {
+    if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+    setEditScreenshot(null)
+    setEditPreviewUrl(null)
+    setEditRemoveScreenshot(false)
     setEditing(false)
     setEditError('')
+  }
+
+  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+    if (file) {
+      setEditScreenshot(file)
+      setEditPreviewUrl(URL.createObjectURL(file))
+      setEditRemoveScreenshot(false)
+    } else {
+      setEditScreenshot(null)
+      setEditPreviewUrl(null)
+    }
   }
 
   const saveEdit = async () => {
@@ -108,10 +135,17 @@ export function PostDetail({ postId, onBack }: Props) {
     setSaving(true)
     setEditError('')
     try {
-      await api.patch(`/posts/${postId}`, {
-        title: editTitle.trim(),
-        description: editDescription.trim(),
-      })
+      const formData = new FormData()
+      formData.append('title', editTitle.trim())
+      formData.append('description', editDescription.trim())
+      if (editScreenshot) {
+        formData.append('screenshot', editScreenshot)
+      } else if (editRemoveScreenshot) {
+        formData.append('removeScreenshot', 'true')
+      }
+
+      await api.patchForm(`/posts/${postId}`, formData)
+      if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
       await fetchPost()
       setEditing(false)
     } catch (err) {
@@ -188,6 +222,62 @@ export function PostDetail({ postId, onBack }: Props) {
               rows={6}
               maxLength={2000}
             />
+
+            <div className={styles.editScreenshotSection}>
+              <span className={styles.editScreenshotLabel}>Screenshot</span>
+              {editScreenshot ? (
+                <div className={styles.editPreviewWrap}>
+                  <img src={editPreviewUrl!} alt="Nieuwe screenshot" className={styles.screenshotImg} />
+                  <button
+                    type="button"
+                    className={styles.screenshotRemoveBtn}
+                    onClick={() => {
+                      if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+                      setEditScreenshot(null)
+                      setEditPreviewUrl(null)
+                      if (editFileRef.current) editFileRef.current.value = ''
+                    }}
+                  >
+                    Verwijder
+                  </button>
+                </div>
+              ) : !editRemoveScreenshot && post.screenshot ? (
+                <div className={styles.editPreviewWrap}>
+                  <img src={`/uploads/${post.screenshot}`} alt="Huidige screenshot" className={styles.screenshotImg} />
+                  <div className={styles.editPreviewActions}>
+                    <label className={styles.screenshotReplaceBtn}>
+                      Vervang
+                      <input
+                        ref={editFileRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handleEditFileChange}
+                        className={styles.hiddenInput}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className={styles.screenshotRemoveBtn}
+                      onClick={() => setEditRemoveScreenshot(true)}
+                    >
+                      Verwijder
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className={styles.editFilePicker}>
+                  <span className={styles.editFilePickerText}>Kies afbeelding...</span>
+                  <input
+                    ref={editFileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleEditFileChange}
+                    className={styles.hiddenInput}
+                  />
+                </label>
+              )}
+            </div>
+
             {editError && <p className={styles.editError}>{editError}</p>}
             <div className={styles.editActions}>
               <button type="button" className={styles.editCancel} onClick={cancelEditing} disabled={saving}>
@@ -202,6 +292,24 @@ export function PostDetail({ postId, onBack }: Props) {
           <p>{post.description}</p>
         )}
       </div>
+
+      {!editing && post.screenshot && (
+        <>
+          <div className={styles.screenshotSection}>
+            <img
+              src={`/uploads/${post.screenshot}`}
+              alt="Screenshot"
+              className={styles.screenshotImg}
+              onClick={() => setLightbox(true)}
+            />
+          </div>
+          {lightbox && (
+            <div className={styles.lightbox} onClick={() => setLightbox(false)}>
+              <img src={`/uploads/${post.screenshot}`} alt="Screenshot volledig" className={styles.lightboxImg} />
+            </div>
+          )}
+        </>
+      )}
 
       <div className={styles.actionRow}>
         {nextAction && (

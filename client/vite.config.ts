@@ -7,6 +7,7 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': 'http://localhost:3002',
+      '/uploads': 'http://localhost:3002',
       '/health': 'http://localhost:3002',
     },
   },

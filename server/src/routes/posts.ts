@@ -1,5 +1,8 @@
 import { Router } from 'express'
+import fs from 'fs'
+import path from 'path'
 import db from '../database'
+import { upload, UPLOADS_DIR } from '../upload'
 
 const router = Router()
 
@@ -78,7 +81,7 @@ router.get('/:id', (req, res) => {
 })
 
 // Create post
-router.post('/', (req, res) => {
+router.post('/', upload.single('screenshot'), (req, res) => {
   const { type, title, description, author } = req.body
 
   if (!type || !['bug', 'verzoek'].includes(type)) {
@@ -110,9 +113,11 @@ router.post('/', (req, res) => {
     return
   }
 
+  const screenshot = req.file ? req.file.filename : null
+
   const result = db.prepare(
-    'INSERT INTO posts (type, title, description, author) VALUES (?, ?, ?, ?)'
-  ).run(type, title.trim(), description.trim(), author.trim())
+    'INSERT INTO posts (type, title, description, author, screenshot) VALUES (?, ?, ?, ?, ?)'
+  ).run(type, title.trim(), description.trim(), author.trim(), screenshot)
 
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(result.lastInsertRowid)
   res.status(201).json(post)
@@ -165,10 +170,11 @@ router.patch('/:id/status', (req, res) => {
 })
 
 // Edit post
-router.patch('/:id', (req, res) => {
-  const { title, description } = req.body
+router.patch('/:id', upload.single('screenshot'), (req, res) => {
+  const id = req.params.id as string
+  const { title, description, removeScreenshot } = req.body
 
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id)
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as { screenshot: string | null } | undefined
   if (!post) {
     res.status(404).json({ error: 'Post niet gevonden' })
     return
@@ -196,7 +202,7 @@ router.patch('/:id', (req, res) => {
   }
 
   const updates: string[] = []
-  const updateParams: string[] = []
+  const updateParams: (string | null)[] = []
 
   if (title !== undefined) {
     updates.push('title = ?')
@@ -207,26 +213,48 @@ router.patch('/:id', (req, res) => {
     updateParams.push(description.trim())
   }
 
+  // Handle screenshot: new file replaces old, removeScreenshot=true removes it
+  if (req.file) {
+    if (post.screenshot) {
+      const oldPath = path.join(UPLOADS_DIR, post.screenshot)
+      fs.unlink(oldPath, () => {})
+    }
+    updates.push('screenshot = ?')
+    updateParams.push(req.file.filename)
+  } else if (removeScreenshot === 'true') {
+    if (post.screenshot) {
+      const oldPath = path.join(UPLOADS_DIR, post.screenshot)
+      fs.unlink(oldPath, () => {})
+    }
+    updates.push('screenshot = ?')
+    updateParams.push(null)
+  }
+
   if (updates.length === 0) {
     res.status(400).json({ error: 'Niets om bij te werken' })
     return
   }
 
   updates.push("updated_at = datetime('now')")
-  updateParams.push(req.params.id)
+  updateParams.push(id)
 
   db.prepare(`UPDATE posts SET ${updates.join(', ')} WHERE id = ?`).run(...updateParams)
 
-  const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id)
+  const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(id)
   res.json(updated)
 })
 
 // Delete post
 router.delete('/:id', (req, res) => {
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id)
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id) as { screenshot: string | null } | undefined
   if (!post) {
     res.status(404).json({ error: 'Post niet gevonden' })
     return
+  }
+
+  if (post.screenshot) {
+    const filePath = path.join(UPLOADS_DIR, post.screenshot)
+    fs.unlink(filePath, () => {})
   }
 
   db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id)
