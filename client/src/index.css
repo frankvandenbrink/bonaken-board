@@ -53,9 +53,7 @@ body {
   background-color: var(--wood-dark);
   -webkit-tap-highlight-color: transparent;
   background-image:
-    radial-gradient(ellipse at top, rgba(92, 61, 46, 0.4) 0%, transparent 50%),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.35' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
-  background-blend-mode: overlay;
+    radial-gradient(ellipse at top, rgba(92, 61, 46, 0.4) 0%, transparent 50%);
 }
 
 h1, h2, h3, h4, h5, h6 {
