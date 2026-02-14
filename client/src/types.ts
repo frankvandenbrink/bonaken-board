@@ -1,5 +1,5 @@
 export type PostType = 'bug' | 'verzoek'
-export type PostStatus = 'open' | 'opgelost' | 'getest'
+export type PostStatus = 'open' | 'opgelost' | 'getest' | 'gearchiveerd'
 
 export interface Post {
   id: number

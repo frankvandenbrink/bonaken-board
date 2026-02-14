@@ -6,11 +6,14 @@ const router = Router()
 const VALID_TRANSITIONS: Record<string, string> = {
   open: 'opgelost',
   opgelost: 'getest',
+  getest: 'gearchiveerd',
+  gearchiveerd: 'getest',
 }
 
 const STATUS_LABELS: Record<string, string> = {
   opgelost: 'Opgelost',
   getest: 'Getest',
+  gearchiveerd: 'Gearchiveerd',
 }
 
 // List posts
@@ -27,9 +30,11 @@ router.get('/', (req, res) => {
     conditions.push('p.type = ?')
     params.push(req.query.type as string)
   }
-  if (req.query.status && ['open', 'opgelost', 'getest'].includes(req.query.status as string)) {
+  if (req.query.status && ['open', 'opgelost', 'getest', 'gearchiveerd'].includes(req.query.status as string)) {
     conditions.push('p.status = ?')
     params.push(req.query.status as string)
+  } else {
+    conditions.push("p.status != 'gearchiveerd'")
   }
 
   if (conditions.length > 0) {
@@ -98,7 +103,7 @@ router.post('/', (req, res) => {
 router.patch('/:id/status', (req, res) => {
   const { status, author } = req.body
 
-  if (!status || !['opgelost', 'getest'].includes(status)) {
+  if (!status || !['opgelost', 'getest', 'gearchiveerd'].includes(status)) {
     res.status(400).json({ error: 'Ongeldige status' })
     return
   }

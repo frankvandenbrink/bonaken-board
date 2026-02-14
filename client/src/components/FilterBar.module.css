@@ -84,6 +84,13 @@
     0 0 8px rgba(212, 175, 55, 0.15);
 }
 
+.chip.active.archiefAccent {
+  color: rgba(245, 245, 220, 0.45);
+  border-color: rgba(92, 61, 46, 0.5);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
 @media (max-width: 500px) {
   .bar {
     gap: var(--space-sm);

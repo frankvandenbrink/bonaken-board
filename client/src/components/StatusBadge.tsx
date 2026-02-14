@@ -5,6 +5,7 @@ const LABELS: Record<PostStatus, string> = {
   open: 'Open',
   opgelost: 'Opgelost',
   getest: 'Getest',
+  gearchiveerd: 'Archief',
 }
 
 export function StatusBadge({ status }: { status: PostStatus }) {

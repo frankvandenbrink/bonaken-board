@@ -19,6 +19,7 @@ const STATUS_OPTIONS: { value: PostStatus | ''; label: string }[] = [
   { value: 'open', label: 'Open' },
   { value: 'opgelost', label: 'Opgelost' },
   { value: 'getest', label: 'Getest' },
+  { value: 'gearchiveerd', label: 'Archief' },
 ]
 
 export function FilterBar({ typeFilter, statusFilter, onTypeChange, onStatusChange }: Props) {
@@ -43,7 +44,7 @@ export function FilterBar({ typeFilter, statusFilter, onTypeChange, onStatusChan
           <button
             key={opt.value}
             type="button"
-            className={`${styles.chip} ${statusFilter === opt.value ? styles.active : ''} ${opt.value === 'opgelost' ? styles.opgelostAccent : ''} ${opt.value === 'getest' ? styles.getestAccent : ''}`}
+            className={`${styles.chip} ${statusFilter === opt.value ? styles.active : ''} ${opt.value === 'opgelost' ? styles.opgelostAccent : ''} ${opt.value === 'getest' ? styles.getestAccent : ''} ${opt.value === 'gearchiveerd' ? styles.archiefAccent : ''}`}
             onClick={() => onStatusChange(opt.value)}
             aria-pressed={statusFilter === opt.value}
           >

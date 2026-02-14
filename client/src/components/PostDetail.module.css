@@ -81,6 +81,25 @@
   box-shadow: 0 0 16px rgba(46, 125, 50, 0.4);
 }
 
+.archiveBtn {
+  background: linear-gradient(180deg, var(--wood-light) 0%, rgba(92, 61, 46, 0.8) 100%);
+  color: rgba(245, 245, 220, 0.6);
+}
+
+.archiveBtn:hover:not(:disabled) {
+  box-shadow: 0 0 12px rgba(92, 61, 46, 0.4);
+  color: var(--cream);
+}
+
+.restoreBtn {
+  background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold-dark) 100%);
+  color: var(--wood-dark);
+}
+
+.restoreBtn:hover:not(:disabled) {
+  box-shadow: var(--shadow-gold);
+}
+
 .loading {
   text-align: center;
   color: rgba(245, 245, 220, 0.4);

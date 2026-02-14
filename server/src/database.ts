@@ -12,7 +12,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL CHECK(type IN ('bug', 'verzoek')),
-    status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'opgelost', 'getest')),
+    status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'opgelost', 'getest', 'gearchiveerd')),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     author TEXT NOT NULL,
@@ -31,5 +31,30 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
   CREATE INDEX IF NOT EXISTS idx_posts_updated_at ON posts(updated_at);
 `)
+
+// Migration: add 'gearchiveerd' status to existing databases
+const createSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='posts'").get() as { sql: string } | undefined
+if (createSql && !createSql.sql.includes('gearchiveerd')) {
+  db.exec(`
+    PRAGMA foreign_keys = OFF;
+    BEGIN;
+    CREATE TABLE posts_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL CHECK(type IN ('bug', 'verzoek')),
+      status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'opgelost', 'getest', 'gearchiveerd')),
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      author TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO posts_new SELECT * FROM posts;
+    DROP TABLE posts;
+    ALTER TABLE posts_new RENAME TO posts;
+    CREATE INDEX IF NOT EXISTS idx_posts_updated_at ON posts(updated_at);
+    COMMIT;
+    PRAGMA foreign_keys = ON;
+  `)
+}
 
 export default db

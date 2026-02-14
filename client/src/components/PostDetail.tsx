@@ -11,6 +11,8 @@ const NAME_KEY = 'bonaken-board-name'
 const NEXT_STATUS: Partial<Record<PostStatus, { status: PostStatus; label: string }>> = {
   open: { status: 'opgelost', label: 'Markeer als Opgelost' },
   opgelost: { status: 'getest', label: 'Markeer als Getest \u2713' },
+  getest: { status: 'gearchiveerd', label: 'Archiveer' },
+  gearchiveerd: { status: 'getest', label: 'Herstel uit archief' },
 }
 
 function formatDate(dateStr: string): string {
@@ -94,7 +96,7 @@ export function PostDetail({ postId, onBack }: Props) {
 
       {nextAction && (
         <button
-          className={styles.statusBtn}
+          className={`${styles.statusBtn} ${post.status === 'getest' ? styles.archiveBtn : ''} ${post.status === 'gearchiveerd' ? styles.restoreBtn : ''}`}
           onClick={handleStatusChange}
           disabled={updating}
         >
