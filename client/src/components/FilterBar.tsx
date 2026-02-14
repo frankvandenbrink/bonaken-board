@@ -4,8 +4,10 @@ import styles from './FilterBar.module.css'
 interface Props {
   typeFilter: PostType | ''
   statusFilter: PostStatus | ''
+  search: string
   onTypeChange: (type: PostType | '') => void
   onStatusChange: (status: PostStatus | '') => void
+  onSearchChange: (search: string) => void
 }
 
 const TYPE_OPTIONS: { value: PostType | ''; label: string }[] = [
@@ -22,9 +24,20 @@ const STATUS_OPTIONS: { value: PostStatus | ''; label: string }[] = [
   { value: 'gearchiveerd', label: 'Archief' },
 ]
 
-export function FilterBar({ typeFilter, statusFilter, onTypeChange, onStatusChange }: Props) {
+export function FilterBar({ typeFilter, statusFilter, search, onTypeChange, onStatusChange, onSearchChange }: Props) {
   return (
     <div className={styles.bar}>
+      <div className={styles.searchWrap}>
+        <input
+          type="text"
+          className={styles.searchInput}
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Zoeken..."
+          aria-label="Zoek posts"
+        />
+      </div>
+      <div className={styles.filters}>
       <div className={styles.group} role="radiogroup" aria-label="Filter op type">
         {TYPE_OPTIONS.map((opt) => (
           <button
@@ -51,6 +64,7 @@ export function FilterBar({ typeFilter, statusFilter, onTypeChange, onStatusChan
             {opt.label}
           </button>
         ))}
+      </div>
       </div>
     </div>
   )

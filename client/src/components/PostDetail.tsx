@@ -4,6 +4,7 @@ import { useApi } from '../hooks/useApi'
 import { StatusBadge } from './StatusBadge'
 import { TypeBadge } from './TypeBadge'
 import { CommentSection } from './CommentSection'
+import { Modal } from './Modal'
 import styles from './PostDetail.module.css'
 
 const NAME_KEY = 'bonaken-board-name'
@@ -36,6 +37,22 @@ export function PostDetail({ postId, onBack }: Props) {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
+  // Edit state
+  const [editing, setEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editError, setEditError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Modal state
+  const [modal, setModal] = useState<{
+    title: string
+    message: string
+    variant: 'alert' | 'confirm' | 'danger'
+    confirmLabel?: string
+    onConfirm: () => void
+  } | null>(null)
+
   const fetchPost = useCallback(async () => {
     const data = await api.get<PostDetailType>(`/posts/${postId}`)
     setPost(data)
@@ -53,7 +70,12 @@ export function PostDetail({ postId, onBack }: Props) {
 
     const name = localStorage.getItem(NAME_KEY) || ''
     if (!name) {
-      alert('Stel eerst je naam in door een bericht of reactie te plaatsen.')
+      setModal({
+        title: 'Naam vereist',
+        message: 'Stel eerst je naam in door een bericht of reactie te plaatsen.',
+        variant: 'alert',
+        onConfirm: () => setModal(null),
+      })
       return
     }
 
@@ -64,6 +86,62 @@ export function PostDetail({ postId, onBack }: Props) {
     } finally {
       setUpdating(false)
     }
+  }
+
+  const startEditing = () => {
+    if (!post) return
+    setEditTitle(post.title)
+    setEditDescription(post.description)
+    setEditError('')
+    setEditing(true)
+  }
+
+  const cancelEditing = () => {
+    setEditing(false)
+    setEditError('')
+  }
+
+  const saveEdit = async () => {
+    if (!editTitle.trim()) { setEditError('Titel is verplicht'); return }
+    if (!editDescription.trim()) { setEditError('Beschrijving is verplicht'); return }
+
+    setSaving(true)
+    setEditError('')
+    try {
+      await api.patch(`/posts/${postId}`, {
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+      })
+      await fetchPost()
+      setEditing(false)
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Er ging iets mis')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = () => {
+    setModal({
+      title: 'Post verwijderen',
+      message: 'Weet je zeker dat je deze post wilt verwijderen? Dit kan niet ongedaan worden gemaakt.',
+      variant: 'danger',
+      confirmLabel: 'Verwijder',
+      onConfirm: async () => {
+        setModal(null)
+        try {
+          await api.del(`/posts/${postId}`)
+          onBack()
+        } catch {
+          setModal({
+            title: 'Fout',
+            message: 'Kon de post niet verwijderen. Probeer het opnieuw.',
+            variant: 'alert',
+            onConfirm: () => setModal(null),
+          })
+        }
+      },
+    })
   }
 
   if (loading) return <p className={styles.loading}>Laden...</p>
@@ -82,7 +160,17 @@ export function PostDetail({ postId, onBack }: Props) {
           <TypeBadge type={post.type} />
           <StatusBadge status={post.status} />
         </div>
-        <h2 className={styles.title}>{post.title}</h2>
+        {editing ? (
+          <input
+            type="text"
+            className={styles.editTitleInput}
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            maxLength={200}
+          />
+        ) : (
+          <h2 className={styles.title}>{post.title}</h2>
+        )}
         <div className={styles.meta}>
           <span>{post.author}</span>
           <span className={styles.dot}>·</span>
@@ -91,24 +179,68 @@ export function PostDetail({ postId, onBack }: Props) {
       </div>
 
       <div className={styles.description}>
-        <p>{post.description}</p>
+        {editing ? (
+          <>
+            <textarea
+              className={styles.editDescInput}
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              rows={6}
+              maxLength={2000}
+            />
+            {editError && <p className={styles.editError}>{editError}</p>}
+            <div className={styles.editActions}>
+              <button type="button" className={styles.editCancel} onClick={cancelEditing} disabled={saving}>
+                Annuleer
+              </button>
+              <button type="button" className={styles.editSave} onClick={saveEdit} disabled={saving}>
+                {saving ? 'Opslaan...' : 'Opslaan'}
+              </button>
+            </div>
+          </>
+        ) : (
+          <p>{post.description}</p>
+        )}
       </div>
 
-      {nextAction && (
-        <button
-          className={`${styles.statusBtn} ${post.status === 'getest' ? styles.archiveBtn : ''} ${post.status === 'gearchiveerd' ? styles.restoreBtn : ''}`}
-          onClick={handleStatusChange}
-          disabled={updating}
-        >
-          {updating ? 'Bijwerken...' : nextAction.label}
-        </button>
-      )}
+      <div className={styles.actionRow}>
+        {nextAction && (
+          <button
+            className={`${styles.statusBtn} ${post.status === 'getest' ? styles.archiveBtn : ''} ${post.status === 'gearchiveerd' ? styles.restoreBtn : ''}`}
+            onClick={handleStatusChange}
+            disabled={updating}
+          >
+            {updating ? 'Bijwerken...' : nextAction.label}
+          </button>
+        )}
+        {!editing && (
+          <>
+            <button type="button" className={styles.editBtn} onClick={startEditing}>
+              Bewerk
+            </button>
+            <button type="button" className={styles.deleteBtn} onClick={handleDelete}>
+              Verwijder
+            </button>
+          </>
+        )}
+      </div>
 
       <CommentSection
         postId={postId}
         comments={post.comments}
         onCommentAdded={fetchPost}
       />
+
+      {modal && (
+        <Modal
+          title={modal.title}
+          message={modal.message}
+          variant={modal.variant}
+          confirmLabel={modal.confirmLabel}
+          onConfirm={modal.onConfirm}
+          onCancel={modal.variant !== 'alert' ? () => setModal(null) : undefined}
+        />
+      )}
     </div>
   )
 }

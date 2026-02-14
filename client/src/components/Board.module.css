@@ -24,3 +24,26 @@
   font-style: italic;
   padding: var(--space-2xl) 0;
 }
+
+.loadMore {
+  align-self: center;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: var(--border-radius);
+  padding: var(--space-sm) var(--space-xl);
+  min-height: 44px;
+  margin-top: var(--space-sm);
+}
+
+.loadMore:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.loadMore:disabled {
+  opacity: 0.5;
+}

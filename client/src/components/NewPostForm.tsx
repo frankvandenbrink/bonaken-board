@@ -99,7 +99,7 @@ export function NewPostForm({ onCreated }: Props) {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Wat gaat er mis? Wat verwacht je?"
+              placeholder="Beschrijf zo gedetailleerd mogelijk wat er mis gaat of wat je wilt. Hoe meer details, hoe sneller we het kunnen oppakken. Denk aan: stappen om het te reproduceren, wat je verwacht, en wat er in plaats daarvan gebeurt."
               rows={4}
               maxLength={2000}
             />
