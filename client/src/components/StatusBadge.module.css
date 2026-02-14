@@ -1,0 +1,31 @@
+.badge {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.open {
+  background: rgba(150, 150, 150, 0.25);
+  color: rgba(200, 200, 200, 0.8);
+  border: 1px solid rgba(150, 150, 150, 0.3);
+}
+
+.opgelost {
+  background: rgba(46, 125, 50, 0.25);
+  color: var(--felt-green-light);
+  border: 1px solid rgba(46, 125, 50, 0.4);
+}
+
+.getest {
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--gold);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
+}

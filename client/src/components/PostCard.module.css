@@ -1,0 +1,71 @@
+.card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--wood-medium);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--border-radius);
+  padding: var(--space-md) var(--space-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  animation: slideUp 0.3s ease both;
+  color: var(--cream);
+}
+
+.card:hover {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(212, 175, 55, 0.08);
+  transform: translateY(-1px);
+}
+
+.card:active {
+  transform: translateY(0);
+}
+
+.badges {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--cream);
+  margin-bottom: var(--space-xs);
+  line-height: 1.3;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: rgba(245, 245, 220, 0.5);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.dot {
+  margin: 0 var(--space-sm);
+}
+
+.comments {
+  color: rgba(212, 175, 55, 0.6);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

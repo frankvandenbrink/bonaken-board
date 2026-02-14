@@ -1,0 +1,26 @@
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.empty {
+  text-align: center;
+  color: rgba(245, 245, 220, 0.4);
+  font-style: italic;
+  padding: var(--space-2xl) 0;
+}

@@ -1,0 +1,10 @@
+.bar {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.bar select {
+  min-width: 140px;
+  min-height: 44px;
+}
