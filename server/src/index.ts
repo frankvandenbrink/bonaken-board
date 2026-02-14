@@ -4,6 +4,7 @@ import multer from 'multer'
 import db from './database'
 import postsRouter from './routes/posts'
 import commentsRouter from './routes/comments'
+import agentRouter from './routes/agent'
 import { UPLOADS_DIR } from './upload'
 
 const app = express()
@@ -20,6 +21,7 @@ app.get('/health', (_req, res) => {
 // API routes
 app.use('/api/posts', postsRouter)
 app.use('/api/posts', commentsRouter)
+app.use('/api/agent', agentRouter)
 
 // Updates since (separate from /api/posts/:id to avoid route conflict)
 app.get('/api/updates-since', (req, res) => {
