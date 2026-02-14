@@ -8,28 +8,49 @@ interface Props {
   onStatusChange: (status: PostStatus | '') => void
 }
 
+const TYPE_OPTIONS: { value: PostType | ''; label: string }[] = [
+  { value: '', label: 'Alle' },
+  { value: 'bug', label: 'Bugs' },
+  { value: 'verzoek', label: 'Verzoeken' },
+]
+
+const STATUS_OPTIONS: { value: PostStatus | ''; label: string }[] = [
+  { value: '', label: 'Alle' },
+  { value: 'open', label: 'Open' },
+  { value: 'opgelost', label: 'Opgelost' },
+  { value: 'getest', label: 'Getest' },
+]
+
 export function FilterBar({ typeFilter, statusFilter, onTypeChange, onStatusChange }: Props) {
   return (
     <div className={styles.bar}>
-      <select
-        value={typeFilter}
-        onChange={(e) => onTypeChange(e.target.value as PostType | '')}
-        aria-label="Filter op type"
-      >
-        <option value="">Alle types</option>
-        <option value="bug">Bugs</option>
-        <option value="verzoek">Verzoeken</option>
-      </select>
-      <select
-        value={statusFilter}
-        onChange={(e) => onStatusChange(e.target.value as PostStatus | '')}
-        aria-label="Filter op status"
-      >
-        <option value="">Alle statussen</option>
-        <option value="open">Open</option>
-        <option value="opgelost">Opgelost</option>
-        <option value="getest">Getest</option>
-      </select>
+      <div className={styles.group} role="radiogroup" aria-label="Filter op type">
+        {TYPE_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            className={`${styles.chip} ${typeFilter === opt.value ? styles.active : ''} ${opt.value === 'bug' ? styles.bugAccent : ''} ${opt.value === 'verzoek' ? styles.verzoekAccent : ''}`}
+            onClick={() => onTypeChange(opt.value)}
+            aria-pressed={typeFilter === opt.value}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      <div className={styles.divider} />
+      <div className={styles.group} role="radiogroup" aria-label="Filter op status">
+        {STATUS_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            className={`${styles.chip} ${statusFilter === opt.value ? styles.active : ''} ${opt.value === 'opgelost' ? styles.opgelostAccent : ''} ${opt.value === 'getest' ? styles.getestAccent : ''}`}
+            onClick={() => onStatusChange(opt.value)}
+            aria-pressed={statusFilter === opt.value}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

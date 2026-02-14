@@ -64,13 +64,25 @@ export function NewPostForm({ onCreated }: Props) {
                 maxLength={50}
               />
             </label>
-            <label className={styles.label}>
+            <div className={styles.label}>
               Type
-              <select value={type} onChange={(e) => setType(e.target.value as PostType)}>
-                <option value="bug">Bug</option>
-                <option value="verzoek">Verzoek</option>
-              </select>
-            </label>
+              <div className={styles.typeToggle}>
+                <button
+                  type="button"
+                  className={`${styles.typeBtn} ${styles.typeBug} ${type === 'bug' ? styles.typeActive : ''}`}
+                  onClick={() => setType('bug')}
+                >
+                  Bug
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.typeBtn} ${styles.typeVerzoek} ${type === 'verzoek' ? styles.typeActive : ''}`}
+                  onClick={() => setType('verzoek')}
+                >
+                  Verzoek
+                </button>
+              </div>
+            </div>
           </div>
           <label className={styles.label}>
             Titel
