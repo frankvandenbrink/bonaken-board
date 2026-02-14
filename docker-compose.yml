@@ -1,0 +1,15 @@
+services:
+  bonaken-board:
+    build: .
+    container_name: bonaken-board
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - DB_PATH=/app/data/board.db
+      - VIRTUAL_HOST=board.bonaken.frankvdbrink.nl
+      - LETSENCRYPT_HOST=board.bonaken.frankvdbrink.nl
