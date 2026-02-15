@@ -64,4 +64,22 @@ if (!columns.some(col => col.name === 'screenshot')) {
   db.exec('ALTER TABLE posts ADD COLUMN screenshot TEXT')
 }
 
+// Migration: add contact and notified_frits columns + frits_updates table
+if (!columns.some(col => col.name === 'contact')) {
+  db.exec('ALTER TABLE posts ADD COLUMN contact TEXT')
+}
+if (!columns.some(col => col.name === 'notified_frits')) {
+  db.exec('ALTER TABLE posts ADD COLUMN notified_frits INTEGER NOT NULL DEFAULT 0')
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS frits_updates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    message TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_frits_updates_post_id ON frits_updates(post_id);
+`)
+
 export default db

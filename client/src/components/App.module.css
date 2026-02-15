@@ -3,3 +3,7 @@
   margin: 0 auto;
   padding: 0 var(--space-lg) var(--space-2xl);
 }
+
+.apkSection {
+  margin: var(--space-lg) 0;
+}

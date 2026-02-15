@@ -59,6 +59,15 @@
   color: rgba(212, 175, 55, 0.6);
 }
 
+.notified {
+  color: rgba(76, 175, 80, 0.8);
+}
+
+.pending {
+  color: rgba(245, 245, 220, 0.4);
+  font-style: italic;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
