@@ -1,0 +1,99 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wood-dark);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  padding: var(--space-lg);
+}
+
+.loginBox {
+  background: var(--wood-medium);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: var(--border-radius);
+  padding: var(--space-xl);
+  max-width: 400px;
+  width: 100%;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: var(--space-sm);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subtitle {
+  text-align: center;
+  color: rgba(245, 245, 220, 0.6);
+  margin-bottom: var(--space-xl);
+  font-size: 0.95rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  color: var(--cream);
+  font-size: 0.9rem;
+}
+
+.input {
+  background: var(--wood-light);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: var(--border-radius);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--cream);
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.input::placeholder {
+  color: rgba(245, 245, 220, 0.3);
+}
+
+.error {
+  color: #ff6b6b;
+  text-align: center;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.button {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.1));
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--border-radius);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--gold);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: var(--space-sm);
+}
+
+.button:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(212, 175, 55, 0.2));
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

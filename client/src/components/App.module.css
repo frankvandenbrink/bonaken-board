@@ -7,3 +7,13 @@
 .apkSection {
   margin: var(--space-lg) 0;
 }
+
+.loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wood-dark);
+  color: var(--cream);
+  font-size: 1.2rem;
+}

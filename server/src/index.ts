@@ -1,4 +1,5 @@
 import express from 'express'
+import session from 'express-session'
 import path from 'path'
 import multer from 'multer'
 import db from './database'
@@ -7,25 +8,71 @@ import commentsRouter from './routes/comments'
 import agentRouter from './routes/agent'
 import { UPLOADS_DIR } from './upload'
 
+// Extend session type
+declare module 'express-session' {
+  interface SessionData {
+    authenticated?: boolean
+  }
+}
+
 const app = express()
 const PORT = process.env.PORT || 3002
+const PASSWORD = 'bonaken-delderveen'
+
+// Session middleware
+app.use(session({
+  secret: 'bonaken-secret-key',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set to true if using HTTPS
+}))
 
 app.use(express.json())
 app.use('/uploads', express.static(UPLOADS_DIR))
 
-// Health check
+// Auth middleware
+function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (req.session?.authenticated) {
+    return next()
+  }
+  res.status(401).json({ error: 'Niet geautoriseerd' })
+}
+
+// Login endpoint
+app.post('/api/login', (req, res) => {
+  const { password } = req.body
+  if (password === PASSWORD) {
+    req.session.authenticated = true
+    res.json({ success: true })
+  } else {
+    res.status(401).json({ error: 'Onjuist wachtwoord' })
+  }
+})
+
+// Check auth status
+app.get('/api/auth', (req, res) => {
+  res.json({ authenticated: req.session?.authenticated || false })
+})
+
+// Logout
+app.post('/api/logout', (req, res) => {
+  req.session.destroy(() => {})
+  res.json({ success: true })
+})
+
+// Health check (public)
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
 })
 
-// API routes
-app.use('/api/posts', postsRouter)
-app.use('/api/posts', commentsRouter)
-app.use('/api/agent', agentRouter)
+// API routes (protected)
+app.use('/api/posts', requireAuth, postsRouter)
+app.use('/api/posts', requireAuth, commentsRouter)
+app.use('/api/agent', requireAuth, agentRouter)
 
-// APK Download endpoint
-app.get('/api/apk', (_req, res) => {
-  const apkPath = '/srv/docker/bonaken/apk/Bonaken-v1.0.1-bugfix-release.apk'
+// APK endpoints (protected)
+app.get('/api/apk', requireAuth, (_req, res) => {
+  const apkPath = '/srv/docker/bonaken/apk/Bonaken-v1.1-bugfix-release.apk'
   const fs = require('fs')
   
   if (!fs.existsSync(apkPath)) {
@@ -35,8 +82,8 @@ app.get('/api/apk', (_req, res) => {
   
   const stats = fs.statSync(apkPath)
   res.json({
-    version: '1.0.1',
-    filename: 'Bonaken-v1.0.1-bugfix-release.apk',
+    version: '1.1',
+    filename: 'Bonaken-v1.1-bugfix-release.apk',
     size: stats.size,
     sizeFormatted: `${(stats.size / 1024 / 1024).toFixed(1)} MB`,
     downloadUrl: '/download/apk',
@@ -44,9 +91,9 @@ app.get('/api/apk', (_req, res) => {
   })
 })
 
-// APK Download
-app.get('/download/apk', (_req, res) => {
-  const apkPath = '/srv/docker/bonaken/apk/Bonaken-v1.0.1-bugfix-release.apk'
+// APK Download (protected)
+app.get('/download/apk', requireAuth, (_req, res) => {
+  const apkPath = '/srv/docker/bonaken/apk/Bonaken-v1.1-bugfix-release.apk'
   const fs = require('fs')
   
   if (!fs.existsSync(apkPath)) {
@@ -54,13 +101,13 @@ app.get('/download/apk', (_req, res) => {
     return
   }
   
-  res.setHeader('Content-Disposition', 'attachment; filename="Bonaken-v1.0.1-bugfix-release.apk"')
+  res.setHeader('Content-Disposition', 'attachment; filename="Bonaken-v1.1-bugfix-release.apk"')
   res.setHeader('Content-Type', 'application/vnd.android.package-archive')
   res.sendFile(apkPath)
 })
 
-// Updates since (separate from /api/posts/:id to avoid route conflict)
-app.get('/api/updates-since', (req, res) => {
+// Updates since (protected)
+app.get('/api/updates-since', requireAuth, (req, res) => {
   const since = req.query.since as string
   if (!since) {
     res.status(400).json({ error: 'Parameter "since" is verplicht' })
