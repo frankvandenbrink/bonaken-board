@@ -19,6 +19,7 @@ declare module 'express-session' {
 const app = express()
 const PORT = process.env.PORT || 3002
 const PASSWORD = 'bonaken-delderveen'
+const FRITS_API_KEY = 'frits-api-key-2026-secret'
 
 // Session middleware
 app.use(session({
@@ -31,9 +32,14 @@ app.use(session({
 app.use(express.json())
 app.use('/uploads', express.static(UPLOADS_DIR))
 
-// Auth middleware
+// Auth middleware for users (session-based)
 function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
   if (req.session?.authenticated) {
+    return next()
+  }
+  // Also allow Frits API key
+  const apiKey = req.headers['x-api-key']
+  if (apiKey === FRITS_API_KEY) {
     return next()
   }
   res.status(401).json({ error: 'Niet geautoriseerd' })
