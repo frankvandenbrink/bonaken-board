@@ -4,15 +4,18 @@ import http from 'http'
 
 const WEBHOOK_URL = process.env.NOTIFY_WEBHOOK_URL || 'http://localhost:3000/api/notify-frits'
 
-// Notify Frits when user comments on a resolved bug
-function notifyFritsReopened(postId: number, title: string, comment: string, commentAuthor: string) {
+// Notify Frits when user comments on any bug
+function notifyFritsComment(postId: number, title: string, comment: string, commentAuthor: string, status: string) {
+  const isResolved = status === 'opgelost'
   const payload = {
     postId,
     title,
-    type: 'bug_reopened',
+    type: isResolved ? 'bug_reopened' : 'bug_comment',
     author: commentAuthor,
     contact: null,
-    description: `Gebruiker heeft gereageerd op een opgeloste bug:\n\n"${comment}"\n\nDe bug moet mogelijk opnieuw worden bekeken.`
+    description: isResolved 
+      ? `Gebruiker heeft gereageerd op een opgeloste bug:\n\n"${comment}"\n\nDe bug moet mogelijk opnieuw worden bekeken.`
+      : `Nieuwe reactie op bug #${postId}:\n\n"${comment}"`
   }
   
   const data = JSON.stringify(payload)
@@ -29,7 +32,7 @@ function notifyFritsReopened(postId: number, title: string, comment: string, com
     (res) => {
       res.resume()
       if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-        console.log(`[NOTIFY] Sent reopen notification for bug #${postId}`)
+        console.log(`[NOTIFY] Sent comment notification for bug #${postId}`)
       } else {
         console.error(`Webhook responded with status ${res.statusCode}`)
       }
@@ -88,9 +91,9 @@ router.post('/:postId/comments', (req, res) => {
   const result = addComment()
   const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(result.lastInsertRowid)
   
-  // Notify Frits if this is a comment on a resolved bug (not from Frits)
-  if (post.type === 'bug' && post.status === 'opgelost' && author.trim() !== 'Frits 🤖') {
-    notifyFritsReopened(Number(postId), post.title, body.trim(), author.trim())
+  // Notify Frits if this is a comment on a bug (not from Frits himself)
+  if (post.type === 'bug' && author.trim() !== 'Frits 🤖') {
+    notifyFritsComment(Number(postId), post.title, body.trim(), author.trim(), post.status)
   }
   
   res.status(201).json(comment)
