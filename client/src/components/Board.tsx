@@ -50,6 +50,16 @@ export function Board({ onNavigate }: Props) {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [fetchPosts])
 
+  // Auto-refresh every 10 seconds to show updated notified_frits status
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!search && page === 1) {
+        fetchPosts(1, false)
+      }
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [fetchPosts, search, page])
+
   const handleLoadMore = () => {
     setLoadingMore(true)
     fetchPosts(page + 1, true)

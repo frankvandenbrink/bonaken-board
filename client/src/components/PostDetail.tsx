@@ -70,6 +70,14 @@ export function PostDetail({ postId, onBack }: Props) {
     fetchPost()
   }, [fetchPost])
 
+  // Auto-refresh every 10 seconds to show new comments and Frits updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchPost()
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [fetchPost])
+
   const handleStatusChange = async () => {
     if (!post) return
     const next = NEXT_STATUS[post.status]
