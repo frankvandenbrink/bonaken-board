@@ -23,6 +23,42 @@ app.use('/api/posts', postsRouter)
 app.use('/api/posts', commentsRouter)
 app.use('/api/agent', agentRouter)
 
+// APK Download endpoint
+app.get('/api/apk', (_req, res) => {
+  const apkPath = '/srv/docker/bonaken/apk/Bonaken-v1.0.1-bugfix-release.apk'
+  const fs = require('fs')
+  
+  if (!fs.existsSync(apkPath)) {
+    res.status(404).json({ error: 'APK niet gevonden' })
+    return
+  }
+  
+  const stats = fs.statSync(apkPath)
+  res.json({
+    version: '1.0.1',
+    filename: 'Bonaken-v1.0.1-bugfix-release.apk',
+    size: stats.size,
+    sizeFormatted: `${(stats.size / 1024 / 1024).toFixed(1)} MB`,
+    downloadUrl: '/download/apk',
+    uploadedAt: stats.mtime
+  })
+})
+
+// APK Download
+app.get('/download/apk', (_req, res) => {
+  const apkPath = '/srv/docker/bonaken/apk/Bonaken-v1.0.1-bugfix-release.apk'
+  const fs = require('fs')
+  
+  if (!fs.existsSync(apkPath)) {
+    res.status(404).json({ error: 'APK niet gevonden' })
+    return
+  }
+  
+  res.setHeader('Content-Disposition', 'attachment; filename="Bonaken-v1.0.1-bugfix-release.apk"')
+  res.setHeader('Content-Type', 'application/vnd.android.package-archive')
+  res.sendFile(apkPath)
+})
+
 // Updates since (separate from /api/posts/:id to avoid route conflict)
 app.get('/api/updates-since', (req, res) => {
   const since = req.query.since as string

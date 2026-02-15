@@ -40,6 +40,14 @@ export function PostCard({ post, onClick }: Props) {
             </span>
           </>
         )}
+        {post.type === 'bug' && (
+          <>
+            <span className={styles.dot}>·</span>
+            <span className={post.notified_frits ? styles.notified : styles.pending}>
+              {post.notified_frits ? '👨‍💻 Frits op de hoogte' : '⏳ Melding onderweg'}
+            </span>
+          </>
+        )}
       </div>
     </button>
   )

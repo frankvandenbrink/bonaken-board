@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Header } from './Header'
 import { Board } from './Board'
 import { PostDetail } from './PostDetail'
+import { ApkDownload } from './ApkDownload'
 import styles from './App.module.css'
 
 function parseHash(): { view: 'board' } | { view: 'post'; id: number } {
@@ -25,12 +26,15 @@ export function App() {
   }
 
   const navigateHome = () => {
-    window.location.hash = '#/'
+    window.location.hash = '#/'  
   }
 
   return (
     <div className={styles.container}>
       <Header onNavigateHome={navigateHome} />
+      <div className={styles.apkSection}>
+        <ApkDownload />
+      </div>
       {route.view === 'board' ? (
         <Board onNavigate={navigateToPost} />
       ) : (

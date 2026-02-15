@@ -1,8 +1,45 @@
 import { Router } from 'express'
 import fs from 'fs'
 import path from 'path'
+import http from 'http'
 import db from '../database'
 import { upload, UPLOADS_DIR } from '../upload'
+
+const WEBHOOK_URL = process.env.NOTIFY_WEBHOOK_URL || 'http://localhost:3000/api/notify-frits'
+
+function notifyFrits(payload: {
+  postId: number
+  title: string
+  type: string
+  author: string
+  contact: string | null
+  description: string
+}) {
+  const data = JSON.stringify(payload)
+  const url = new URL(WEBHOOK_URL)
+  const req = http.request(
+    {
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
+      timeout: 5000,
+    },
+    (res) => {
+      res.resume()
+      if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+        db.prepare('UPDATE posts SET notified_frits = 1 WHERE id = ?').run(payload.postId)
+      } else {
+        console.error(`Webhook responded with status ${res.statusCode}`)
+      }
+    }
+  )
+  req.on('error', (err) => console.error('Webhook notification failed:', err.message))
+  req.on('timeout', () => { req.destroy(); console.error('Webhook notification timed out') })
+  req.write(data)
+  req.end()
+}
 
 const router = Router()
 
@@ -69,7 +106,7 @@ router.get('/', (req, res) => {
   res.json({ posts, total, page, limit })
 })
 
-// Get single post with comments
+// Get single post with comments and frits updates
 router.get('/:id', (req, res) => {
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id)
   if (!post) {
@@ -77,12 +114,13 @@ router.get('/:id', (req, res) => {
     return
   }
   const comments = db.prepare('SELECT * FROM comments WHERE post_id = ? ORDER BY created_at ASC').all(req.params.id)
-  res.json({ ...post, comments })
+  const fritsUpdates = db.prepare('SELECT * FROM frits_updates WHERE post_id = ? ORDER BY created_at DESC').all(req.params.id)
+  res.json({ ...post, comments, frits_updates: fritsUpdates })
 })
 
 // Create post
 router.post('/', upload.single('screenshot'), (req, res) => {
-  const { type, title, description, author } = req.body
+  const { type, title, description, author, contact } = req.body
 
   if (!type || !['bug', 'verzoek'].includes(type)) {
     res.status(400).json({ error: 'Type moet "bug" of "verzoek" zijn' })
@@ -114,12 +152,27 @@ router.post('/', upload.single('screenshot'), (req, res) => {
   }
 
   const screenshot = req.file ? req.file.filename : null
+  const contactValue = contact && typeof contact === 'string' ? contact.trim() : null
 
   const result = db.prepare(
-    'INSERT INTO posts (type, title, description, author, screenshot) VALUES (?, ?, ?, ?, ?)'
-  ).run(type, title.trim(), description.trim(), author.trim(), screenshot)
+    'INSERT INTO posts (type, title, description, author, screenshot, contact) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(type, title.trim(), description.trim(), author.trim(), screenshot, contactValue)
 
-  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(result.lastInsertRowid)
+  const postId = result.lastInsertRowid as number
+
+  // Notify Frits for bug reports
+  if (type === 'bug') {
+    notifyFrits({
+      postId,
+      title: title.trim(),
+      type,
+      author: author.trim(),
+      contact: contactValue,
+      description: description.trim()
+    })
+  }
+
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId)
   res.status(201).json(post)
 })
 
@@ -259,6 +312,53 @@ router.delete('/:id', (req, res) => {
 
   db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id)
   res.json({ ok: true })
+})
+
+// Frits: Add update message to a post
+router.post('/:id/frits-update', (req, res) => {
+  const { message } = req.body
+  const postId = req.params.id
+
+  if (!message || typeof message !== 'string' || message.trim().length === 0) {
+    res.status(400).json({ error: 'Bericht is verplicht' })
+    return
+  }
+
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId)
+  if (!post) {
+    res.status(404).json({ error: 'Post niet gevonden' })
+    return
+  }
+
+  const result = db.prepare(
+    'INSERT INTO frits_updates (post_id, message) VALUES (?, ?)'
+  ).run(postId, message.trim())
+
+  // Also add a comment so it shows in the regular comment stream
+  db.prepare(
+    'INSERT INTO comments (post_id, author, body) VALUES (?, ?, ?)'
+  ).run(postId, 'Frits 🤖', message.trim())
+
+  // Update post updated_at timestamp
+  db.prepare("UPDATE posts SET updated_at = datetime('now') WHERE id = ?").run(postId)
+
+  const update = db.prepare('SELECT * FROM frits_updates WHERE id = ?').get(result.lastInsertRowid)
+  res.status(201).json(update)
+})
+
+// Frits: Mark post as manually notified (fallback if webhook failed)
+router.patch('/:id/notify-status', (req, res) => {
+  const postId = req.params.id
+
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId)
+  if (!post) {
+    res.status(404).json({ error: 'Post niet gevonden' })
+    return
+  }
+
+  db.prepare('UPDATE posts SET notified_frits = 1 WHERE id = ?').run(postId)
+  const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId)
+  res.json(updated)
 })
 
 export default router

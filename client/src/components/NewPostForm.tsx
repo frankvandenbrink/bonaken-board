@@ -4,6 +4,7 @@ import { useApi } from '../hooks/useApi'
 import styles from './NewPostForm.module.css'
 
 const NAME_KEY = 'bonaken-board-name'
+const CONTACT_KEY = 'bonaken-board-contact'
 
 interface Props {
   onCreated: () => void
@@ -13,6 +14,7 @@ export function NewPostForm({ onCreated }: Props) {
   const api = useApi()
   const [open, setOpen] = useState(false)
   const [author, setAuthor] = useState(() => localStorage.getItem(NAME_KEY) || '')
+  const [contact, setContact] = useState(() => localStorage.getItem(CONTACT_KEY) || '')
   const [type, setType] = useState<PostType>('bug')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -52,17 +54,22 @@ export function NewPostForm({ onCreated }: Props) {
     setSubmitting(true)
     try {
       localStorage.setItem(NAME_KEY, author.trim())
+      if (contact.trim()) {
+        localStorage.setItem(CONTACT_KEY, contact.trim())
+      }
 
       const formData = new FormData()
       formData.append('type', type)
       formData.append('title', title.trim())
       formData.append('description', description.trim())
       formData.append('author', author.trim())
+      if (contact.trim()) formData.append('contact', contact.trim())
       if (screenshot) formData.append('screenshot', screenshot)
 
       await api.postForm('/posts', formData)
       setTitle('')
       setDescription('')
+      setContact('')
       removeScreenshot()
       setOpen(false)
       onCreated()
@@ -115,6 +122,16 @@ export function NewPostForm({ onCreated }: Props) {
               </div>
             </div>
           </div>
+          <label className={styles.label}>
+            Contact (optioneel - voor updates)
+            <input
+              type="text"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              placeholder="Email of Telegram @username"
+              maxLength={100}
+            />
+          </label>
           <label className={styles.label}>
             Titel
             <input
