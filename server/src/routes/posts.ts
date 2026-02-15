@@ -41,6 +41,43 @@ function notifyFrits(payload: {
   req.end()
 }
 
+// Notify Frits when user comments on a resolved bug
+function notifyFritsReopened(postId: number, title: string, comment: string, commentAuthor: string) {
+  const payload = {
+    postId,
+    title,
+    type: 'bug_reopened',
+    author: commentAuthor,
+    contact: null,
+    description: `Gebruiker heeft gereageerd op een opgeloste bug:\n\n${comment}\n\nDe bug moet mogelijk opnieuw worden bekeken.`
+  }
+  
+  const data = JSON.stringify(payload)
+  const url = new URL(WEBHOOK_URL)
+  const req = http.request(
+    {
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
+      timeout: 5000,
+    },
+    (res) => {
+      res.resume()
+      if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+        console.log(`[NOTIFY] Sent reopen notification for bug #${postId}`)
+      } else {
+        console.error(`Webhook responded with status ${res.statusCode}`)
+      }
+    }
+  )
+  req.on('error', (err) => console.error('Webhook notification failed:', err.message))
+  req.on('timeout', () => { req.destroy(); console.error('Webhook notification timed out') })
+  req.write(data)
+  req.end()
+}
+
 const router = Router()
 
 const VALID_TRANSITIONS: Record<string, string> = {
@@ -357,6 +394,44 @@ router.patch('/:id/notify-status', (req, res) => {
   }
 
   db.prepare('UPDATE posts SET notified_frits = 1 WHERE id = ?').run(postId)
+  const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId)
+  res.json(updated)
+})
+
+// Frits: Reopen a bug (set status back to open from opgelost)
+router.patch('/:id/reopen', (req, res) => {
+  const postId = req.params.id
+  const { reason } = req.body
+
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId) as { status: string; title: string } | undefined
+  if (!post) {
+    res.status(404).json({ error: 'Post niet gevonden' })
+    return
+  }
+
+  if (post.status !== 'opgelost') {
+    res.status(400).json({ error: 'Alleen opgeloste bugs kunnen worden heropend' })
+    return
+  }
+
+  const updatePost = db.prepare(
+    "UPDATE posts SET status = 'open', updated_at = datetime('now') WHERE id = ?"
+  )
+  const insertComment = db.prepare(
+    'INSERT INTO comments (post_id, author, body) VALUES (?, ?, ?)'
+  )
+
+  const transition = db.transaction(() => {
+    updatePost.run(postId)
+    insertComment.run(
+      postId,
+      'Frits 🤖',
+      `Bug heropend${reason ? ': ' + reason : ' voor verder onderzoek'}`
+    )
+  })
+
+  transition()
+
   const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId)
   res.json(updated)
 })

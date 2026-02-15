@@ -1,5 +1,45 @@
 import { Router } from 'express'
 import db from '../database'
+import http from 'http'
+
+const WEBHOOK_URL = process.env.NOTIFY_WEBHOOK_URL || 'http://localhost:3000/api/notify-frits'
+
+// Notify Frits when user comments on a resolved bug
+function notifyFritsReopened(postId: number, title: string, comment: string, commentAuthor: string) {
+  const payload = {
+    postId,
+    title,
+    type: 'bug_reopened',
+    author: commentAuthor,
+    contact: null,
+    description: `Gebruiker heeft gereageerd op een opgeloste bug:\n\n"${comment}"\n\nDe bug moet mogelijk opnieuw worden bekeken.`
+  }
+  
+  const data = JSON.stringify(payload)
+  const url = new URL(WEBHOOK_URL)
+  const req = http.request(
+    {
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
+      timeout: 5000,
+    },
+    (res) => {
+      res.resume()
+      if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+        console.log(`[NOTIFY] Sent reopen notification for bug #${postId}`)
+      } else {
+        console.error(`Webhook responded with status ${res.statusCode}`)
+      }
+    }
+  )
+  req.on('error', (err) => console.error('Webhook notification failed:', err.message))
+  req.on('timeout', () => { req.destroy(); console.error('Webhook notification timed out') })
+  req.write(data)
+  req.end()
+}
 
 const router = Router()
 
@@ -8,7 +48,7 @@ router.post('/:postId/comments', (req, res) => {
   const { author, body } = req.body
   const { postId } = req.params
 
-  const post = db.prepare('SELECT id FROM posts WHERE id = ?').get(postId)
+  const post = db.prepare('SELECT id, title, type, status FROM posts WHERE id = ?').get(postId) as { id: number; title: string; type: string; status: string } | undefined
   if (!post) {
     res.status(404).json({ error: 'Post niet gevonden' })
     return
@@ -47,6 +87,12 @@ router.post('/:postId/comments', (req, res) => {
 
   const result = addComment()
   const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(result.lastInsertRowid)
+  
+  // Notify Frits if this is a comment on a resolved bug (not from Frits)
+  if (post.type === 'bug' && post.status === 'opgelost' && author.trim() !== 'Frits 🤖') {
+    notifyFritsReopened(Number(postId), post.title, body.trim(), author.trim())
+  }
+  
   res.status(201).json(comment)
 })
 
