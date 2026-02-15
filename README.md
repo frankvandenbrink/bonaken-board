@@ -24,11 +24,11 @@ Dit diagram toont de complete flow van bug melding tot status update:
 │                 │     │  Poort 3006      │     │  Poort 3006     │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
         │
-        │ Jij ziet bug en fixt 'm
+        │ Frits ziet bug en fixt 'm
         ▼
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Jij reply't   │────▶│  Frits stuurt    │────▶│   Board API     │
-│  "Bezig met fix"│     │  update via API  │     │  (POST comment) │
+│ Frits post update │────▶│  Webhook server  │────▶│   Board API     │
+│  "Bezig met fix"│     │  stuurt notificatie │     │  (POST comment) │
 └─────────────────┘     └──────────────────┘     └────────┬────────┘
                                                           │
                                                           ▼
@@ -56,14 +56,14 @@ Dit diagram toont de complete flow van bug melding tot status update:
    - Ontvangt POST van VPS
    - Stuurt Telegram bericht naar jou
 
-4. **Jij werkt de bug af**
+4. **Frits werkt de bug af**
    - Krijgt push notificatie op Telegram
-   - Klikt link om bug te bekijken
+   - Bekijkt bug details
    - Fixt de bug, bouwt nieuwe APK
+   - Deployt naar VPS
 
-5. **Jij update het board**
-   - Stuurt bericht naar Frits (reply op notificatie)
-   - Frits post update via API: `POST /api/posts/{id}/frits-update`
+5. **Frits update het board**
+   - Post update via API: `POST /api/posts/{id}/frits-update`
    - Update verschijnt als comment op bug kaartje
 
 ### Technische Details
