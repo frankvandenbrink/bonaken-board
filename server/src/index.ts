@@ -1,5 +1,6 @@
 import express from 'express'
 import session from 'express-session'
+import http from 'http'
 import path from 'path'
 import multer from 'multer'
 import db from './database'
@@ -63,6 +64,41 @@ app.post('/api/logout', (req, res) => {
 // Health check (public)
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
+})
+
+// Webhook endpoint for Frits notifications (public - called by VPS)
+app.post('/api/notify-frits', (req, res) => {
+  // Forward to Frits webhook server
+  const WEBHOOK_URL = process.env.NOTIFY_WEBHOOK_URL || 'http://100.89.162.5:3006/api/notify-frits'
+  
+  const data = JSON.stringify(req.body)
+  const url = new URL(WEBHOOK_URL)
+  
+  const forwardReq = http.request(
+    {
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
+      timeout: 5000,
+    },
+    (forwardRes) => {
+      let responseData = ''
+      forwardRes.on('data', (chunk) => responseData += chunk)
+      forwardRes.on('end', () => {
+        res.status(forwardRes.statusCode || 200).json({ forwarded: true })
+      })
+    }
+  )
+  
+  forwardReq.on('error', (err) => {
+    console.error('Webhook forward failed:', err.message)
+    res.status(500).json({ error: 'Webhook failed' })
+  })
+  
+  forwardReq.write(data)
+  forwardReq.end()
 })
 
 // API routes (protected)
